@@ -93,6 +93,143 @@ class GaReport(BaseController):
                              entry.key.encode('utf-8'),
                              entry.value.encode('utf-8')])
 
+    def month_data(self, month):
+        c.months, c.day = _month_details(GA_Stat)
+        c.month = month
+        if c.month:
+            c.month_desc = ''.join([m[1] for m in c.months if m[0]==c.month])
+
+        q = model.Session.query(GA_Stat).\
+            filter(GA_Stat.stat_name=='Totals')	   
+        if c.month != 'all_months':
+            q = q.filter(GA_Stat.period_name==c.month)
+        entries = q.order_by('ga_stat.key').all()
+
+        def clean_key(key, val):
+            if key in ['Average time on site', 'Pages per visit', 'New visits', 'Bounce rate (home page)']:
+                val =  "%.2f" % round(float(val), 2)
+                if key == 'Average time on site':
+                    mins, secs = divmod(float(val), 60)
+                    hours, mins = divmod(mins, 60)
+                    val = val
+                if key in ['New visits','Bounce rate (home page)']:
+                    val = "%s%%" % val
+            if key in ['Total page views', 'Total visits']:
+                val = int(val)
+
+            return key, val
+
+        c.global_totals = []	
+        if c.month != 'all_months':
+            for e in entries:
+                key, val = clean_key(e.key, e.value)
+                c.global_totals.append((key, val))
+        else:
+            d = collections.defaultdict(list)
+            for e in entries:
+                d[e.key].append(float(e.value))
+            for k, v in d.iteritems():
+                if k in ['Total page views', 'Total visits']:
+                    v = sum(v)
+                else:
+                    v = float(sum(v))/float(len(v))
+                key, val = clean_key(k,v)
+
+                c.global_totals.append((key, val))
+
+
+        def sort_func(x):
+            key = x[0]
+            total_order = ['Total page views','Total visits','Pages per visit','Average time on site', 'Average time on a page', 'New users', 'New users percentage', 'Percent with search', 'Bounce rate']
+            if key in total_order:
+                return total_order.index(key)
+            return 999
+        c.global_totals = sorted(c.global_totals, key=sort_func)
+	
+        keys = {
+            'Browser versions': 'browser_versions',
+            'Browsers': 'browsers',
+            'Operating Systems versions': 'os_versions',
+            'Operating Systems': 'os',
+            'Social sources': 'social_networks',
+            'Languages': 'languages',
+            'Country': 'country',
+            'Browser sizes': 'browser_sizes',
+            'Device category': 'device_category',
+            'Region': 'region',
+            'Metro': 'metro',
+            'Referral sources': 'referral_sources',
+            'Page views': 'page_views',
+            'Page avgTime': 'page_avgTime',
+            'Landing page': 'landing_page',
+            'Second page': 'second_page',
+            'Third page': 'third_page',
+            'Exit page' : 'exit_page',
+            'Time on page': 'time_on_page',
+            'Mobile brands': 'mobile_brands',
+            'Mobile devices': 'mobile_devices',
+            'Search keywords': 'search_keywords',
+            'Search destination page': 'search_destination_page'
+        }
+
+        def shorten_name(name, length=60):
+            return (name[:length] + '..') if len(name) > 60 else name
+
+        def fill_out_url(url):
+            import urlparse
+            return urlparse.urljoin(g.site_url, url)
+
+        def convert_for_chart(arg):
+            newArray = []
+            newArray.append(arg[1])
+            newArray.append(arg[0])
+            return newArray
+
+        def convert_for_pie_chart(arg):
+            newArray = []
+            newArray.append(float(_percent(arg[0],total).strip('%')))
+            newArray.append(arg[1])
+            return newArray
+
+        for k, v in keys.iteritems():
+            q = model.Session.query(GA_Stat).\
+                filter(GA_Stat.stat_name==k).\
+                order_by(GA_Stat.period_name)
+
+            if c.month != 'all_months':
+                entries = []
+                q = q.filter(GA_Stat.period_name==c.month)\
+
+            d = collections.defaultdict(int)
+            for e in q.all():
+                d[e.key] += float(e.value)
+            entries = []
+            for key, val in d.iteritems():
+                entries.append((key,val,))
+            entries = sorted(entries, key=operator.itemgetter(1), reverse=True)
+
+            #convert data to be used for bar and pie charts
+            chart_entries = map(convert_for_chart, entries)[:20]
+            setattr(c, v+'_chart', json.dumps(chart_entries))
+
+            if k not in ('Social sources', 'Page views', 'Page avgTime', 'Landing page', 'Exit page', 'Second page', 'Third page', 'Time on page', 'Search keywords', 'Search destination page'):
+                total = sum([num for _,num in entries])
+                pie_chart_entries = map(convert_for_pie_chart, chart_entries)[:15]
+                setattr(c,v+'_chart',json.dumps(pie_chart_entries))
+
+            # Get the total for each set of values and then set the value as
+            # a percentage of the total
+            if k == 'Social sources':
+                total = sum([x for n,x in c.global_totals if n == 'Total visits'])
+                setattr(c, v, [(k,_percent(v,total)) for k,v in entries ])
+            elif k in ('Page views','Page avgTime','Landing page','Exit page','Second page', 'Third page', 'Time on page', 'Search keywords', 'Search destination page'):
+                setattr(c, v, [(k,v) for k,v in entries ])
+            else:
+                total = sum([num for _,num in entries])
+                setattr(c, v, [(k,_percent(v,total)) for k,v in entries ])
+
+        return render('ga_report/site/month_data.html')
+
     def index(self):
 
         # Get the month details by fetching distinct values and determining the
@@ -107,6 +244,7 @@ class GaReport(BaseController):
 
         q = model.Session.query(GA_Stat).\
             filter(GA_Stat.stat_name=='Totals')
+	
         if c.month:
             q = q.filter(GA_Stat.period_name==c.month)
         entries = q.order_by('ga_stat.key').all()
@@ -117,7 +255,7 @@ class GaReport(BaseController):
                 if key == 'Average time on site':
                     mins, secs = divmod(float(val), 60)
                     hours, mins = divmod(mins, 60)
-                    val = '%02d:%02d:%02d (%s seconds) ' % (hours, mins, secs, val)
+                    val = val
                 if key in ['New visits','Bounce rate (home page)']:
                     val = "%s%%" % val
             if key in ['Total page views', 'Total visits']:
@@ -126,25 +264,13 @@ class GaReport(BaseController):
             return key, val
 
         # Query historic values for sparkline rendering
-        sparkline_query = model.Session.query(GA_Stat)\
-                .filter(GA_Stat.stat_name=='Totals')\
-                .order_by(GA_Stat.period_name)
-        sparkline_data = {}
-        for x in sparkline_query:
-            sparkline_data[x.key] = sparkline_data.get(x.key,[])
-            key, val = clean_key(x.key,float(x.value))
-            tooltip = '%s: %s' % (_get_month_name(x.period_name), val)
-            sparkline_data[x.key].append( (tooltip,x.value) )
         # Trim the latest month, as it looks like a huge dropoff
-        for key in sparkline_data:
-            sparkline_data[key] = sparkline_data[key][:-1]
 
         c.global_totals = []
         if c.month:
             for e in entries:
                 key, val = clean_key(e.key, e.value)
-                sparkline = sparkline_data[e.key]
-                c.global_totals.append((key, val, sparkline))
+                c.global_totals.append((key, val))
         else:
             d = collections.defaultdict(list)
             for e in entries:
@@ -154,14 +280,15 @@ class GaReport(BaseController):
                     v = sum(v)
                 else:
                     v = float(sum(v))/float(len(v))
-                sparkline = sparkline_data[k]
                 key, val = clean_key(k,v)
 
-                c.global_totals.append((key, val, sparkline))
+                c.global_totals.append((key, val))
+
+
         # Sort the global totals into a more pleasant order
         def sort_func(x):
             key = x[0]
-            total_order = ['Total page views','Total visits','Pages per visit']
+            total_order = ['Total page views','Total visits','Pages per visit','Average time on site', 'Average time on a page', 'New users', 'New users percentage', 'Percent with search', 'Bounce rate']
             if key in total_order:
                 return total_order.index(key)
             return 999
@@ -174,7 +301,23 @@ class GaReport(BaseController):
             'Operating Systems': 'os',
             'Social sources': 'social_networks',
             'Languages': 'languages',
-            'Country': 'country'
+            'Country': 'country',
+            'Browser sizes': 'browser_sizes',
+            'Device category': 'device_category',
+            'Region': 'region',
+            'Metro': 'metro',
+            'Referral sources': 'referral_sources',
+            'Page views': 'page_views',
+            'Page avgTime': 'page_avgTime',
+            'Landing page': 'landing_page',
+            'Second page': 'second_page',
+            'Third page': 'third_page',
+            'Exit page' : 'exit_page',
+            'Time on page': 'time_on_page',
+            'Mobile brands': 'mobile_brands',
+            'Mobile devices': 'mobile_devices',
+            'Search keywords': 'search_keywords',
+            'Search destination page': 'search_destination_page'
         }
 
         def shorten_name(name, length=60):
@@ -183,6 +326,18 @@ class GaReport(BaseController):
         def fill_out_url(url):
             import urlparse
             return urlparse.urljoin(g.site_url, url)
+
+        def convert_for_chart(arg):
+            newArray = []
+            newArray.append(arg[1])
+            newArray.append(arg[0])
+            return newArray
+
+	def convert_for_pie_chart(arg):
+            newArray = []
+            newArray.append(float(_percent(arg[0],total).strip('%')))
+            newArray.append(arg[1])
+            return newArray
 
         c.social_referrer_totals, c.social_referrers = [], []
         q = model.Session.query(GA_ReferralStat)
@@ -207,40 +362,35 @@ class GaReport(BaseController):
             # Buffer the tabular data
             if c.month:
                 entries = []
-                q = q.filter(GA_Stat.period_name==c.month).\
-                          order_by('ga_stat.value::int desc')
+                q = q.filter(GA_Stat.period_name==c.month)\
+                         # order_by('ga_stat.value')
             d = collections.defaultdict(int)
             for e in q.all():
-                d[e.key] += int(e.value)
+                d[e.key] += float(e.value)
             entries = []
             for key, val in d.iteritems():
                 entries.append((key,val,))
             entries = sorted(entries, key=operator.itemgetter(1), reverse=True)
+	   
+            #convert data to be used for bar and pie charts 
+            chart_entries = map(convert_for_chart, entries)[:20]
+            setattr(c, v+'_chart', json.dumps(chart_entries))
 
-            # Run a query on all months to gather graph data
-            graph_query = model.Session.query(GA_Stat).\
-                filter(GA_Stat.stat_name==k).\
-                order_by(GA_Stat.period_name)
-            graph_dict = {}
-            for stat in graph_query:
-                graph_dict[ stat.key ] = graph_dict.get(stat.key,{
-                    'name':stat.key,
-                    'raw': {}
-                    })
-                graph_dict[ stat.key ]['raw'][stat.period_name] = float(stat.value)
-            stats_in_table = [x[0] for x in entries]
-            stats_not_in_table = set(graph_dict.keys()) - set(stats_in_table)
-            stats = stats_in_table + sorted(list(stats_not_in_table))
-            graph = [graph_dict[x] for x in stats]
-            setattr(c, v+'_graph', json.dumps( _to_rickshaw(graph,percentageMode=True) ))
+            if k not in ('Social sources', 'Page views', 'Page avgTime', 'Landing page', 'Exit page', 'Second page', 'Third page', 'Time on page', 'Search keywords', 'Search destination page'):
+                total = sum([num for _,num in entries])
+                pie_chart_entries = map(convert_for_pie_chart, chart_entries)[:15]
+                setattr(c,v+'_chart',json.dumps(pie_chart_entries))
 
             # Get the total for each set of values and then set the value as
             # a percentage of the total
             if k == 'Social sources':
-                total = sum([x for n,x,graph in c.global_totals if n == 'Total visits'])
+                total = sum([x for n,x in c.global_totals if n == 'Total visits'])
+                setattr(c, v, [(k,_percent(v,total)) for k,v in entries ])
+            elif k in ('Page views','Page avgTime','Landing page','Exit page','Second page', 'Third page', 'Time on page', 'Search keywords', 'Search destination page'):
+                setattr(c, v, [(k,v) for k,v in entries ])
             else:
                 total = sum([num for _,num in entries])
-            setattr(c, v, [(k,_percent(v,total)) for k,v in entries ])
+                setattr(c, v, [(k,_percent(v,total)) for k,v in entries ])
 
         return render('ga_report/site/index.html')
 
@@ -250,17 +400,19 @@ class GaDatasetReport(BaseController):
     Displays the pageview and visit count for datasets
     with options to filter by publisher and time period.
     """
-    def publisher_csv(self, month):
+    def organization_csv(self, month):
         '''
         Returns a CSV of each publisher with the total number of dataset
         views & visits.
         '''
+	with open("/tmp/python.log", "a") as mylog:
+    	    mylog.write("\n%s\n" % "HELLO")
         c.month = month if not month == 'all' else ''
         response.headers['Content-Type'] = "text/csv; charset=utf-8"
-        response.headers['Content-Disposition'] = str('attachment; filename=publishers_%s.csv' % (month,))
+        response.headers['Content-Disposition'] = str('attachment; filename=organizations_%s.csv' % (month,))
 
         writer = csv.writer(response)
-        writer.writerow(["Publisher Title", "Publisher Name", "Views", "Visits", "Period Name"])
+        writer.writerow(["Organization Title", "Organization Name", "Views", "Visits", "Period Name"])
 
         top_publishers = _get_top_publishers(limit=None)
 
@@ -290,22 +442,52 @@ class GaDatasetReport(BaseController):
             str('attachment; filename=datasets_%s_%s.csv' % (c.publisher_name, month,))
 
         writer = csv.writer(response)
-        writer.writerow(["Dataset Title", "Dataset Name", "Views", "Visits", "Resource downloads", "Period Name"])
+        writer.writerow(["Dataset Title", "Dataset Name", "Views", "Visits", "Period Name"])
 
         for package,view,visit,downloads in packages:
             writer.writerow([package.title.encode('utf-8'),
                              package.name.encode('utf-8'),
                              view,
                              visit,
-                             downloads,
                              month])
 
-    def publishers(self):
+    def organizations_month(self, month):
+        c.months, c.day = _month_details(GA_Url)
+
+        def convert_for_chart(arg):
+            newArray = []
+            newArray.append(arg[1])
+            newArray.append(arg[0].title)
+            return newArray
+
+        c.month = month
+        c.month_desc = 'all months'
+
+        if c.month == 'all_months':
+            c.month = 'All'
+
+        if c.month != 'All':
+            c.month_desc = ''.join([m[1] for m in c.months if m[0]==c.month])
+
+        c.top_publishers = _get_top_publishers()
+
+        chart_entries = map(convert_for_chart, c.top_publishers)[:20]
+        setattr(c, 'publisher_chart', json.dumps(chart_entries))
+
+        return render('ga_report/organization/organization_month.html')
+	
+    def organizations(self):
         '''A list of publishers and the number of views/visits for each'''
 
         # Get the month details by fetching distinct values and determining the
         # month names from the values.
         c.months, c.day = _month_details(GA_Url)
+
+        def convert_for_chart(arg):
+            newArray = []
+            newArray.append(arg[1])
+            newArray.append(arg[0].title)
+            return newArray
 
         # Work out which month to show, based on query params of the first item
         c.month = request.params.get('month', '')
@@ -314,10 +496,11 @@ class GaDatasetReport(BaseController):
             c.month_desc = ''.join([m[1] for m in c.months if m[0]==c.month])
 
         c.top_publishers = _get_top_publishers()
-        graph_data = _get_top_publishers_graph()
-        c.top_publishers_graph = json.dumps( _to_rickshaw(graph_data) )
 
-        return render('ga_report/publisher/index.html')
+        chart_entries = map(convert_for_chart, c.top_publishers)[:20]
+        setattr(c, 'publisher_chart', json.dumps(chart_entries))
+
+        return render('ga_report/organization/index.html')
 
     def _get_packages(self, publisher=None, month='', count=-1):
         '''Returns the datasets in order of views'''
@@ -364,13 +547,20 @@ class GaDatasetReport(BaseController):
         '''
         Lists the most popular datasets across all publishers
         '''
-        return self.read_publisher(None)
+        return self.read_organization(None)
 
-    def read_publisher(self, id):
+    def read_organization(self, id):
         '''
         Lists the most popular datasets for a publisher (or across all publishers)
         '''
-        count = 20
+        count = 100
+
+	def convert_for_chart(arg):
+            newArray = []
+            newArray.append(arg[1])
+            newArray.append(arg[0].title)
+	    newArray.append(arg[0].name)
+            return newArray
 
         c.publishers = _get_publishers()
 
@@ -396,33 +586,66 @@ class GaDatasetReport(BaseController):
         month = c.month or 'All'
         c.publisher_page_views = 0
         q = model.Session.query(GA_Url).\
+            filter(GA_Url.url=='/organization/%s' % c.publisher_name)
+        entry = q.filter(GA_Url.period_name==c.month).first()
+        c.publisher_page_views = entry.pageviews if entry else 0
+
+        c.top_packages = self._get_packages(publisher=c.publisher, count=100, month=c.month)
+
+        chart_entries = map(convert_for_chart, c.top_packages)[:20]
+        setattr(c, 'dataset_chart', json.dumps(chart_entries))
+
+        return render('ga_report/organization/read.html')
+
+    def read_month(self, month):
+        count = 100
+
+        def convert_for_chart(arg):
+            newArray = []
+            newArray.append(arg[1])
+            newArray.append(arg[0].title)
+            newArray.append(arg[0].name)
+            return newArray
+
+        c.publishers = _get_publishers()
+
+        id = None
+        id = request.params.get('publisher', id)
+        if id and id != 'all':
+            c.publisher = model.Group.get(id)
+            if not c.publisher:
+                abort(404, 'A publisher with that name could not be found')
+            c.publisher_name = c.publisher.name
+        c.top_packages = [] # package, dataset_views in c.top_packages
+
+        # Get the month details by fetching distinct values and determining the
+        # month names from the values.
+        c.months, c.day = _month_details(GA_Url)
+
+        # Work out which month to show, based on query params of the first item
+        c.month = month
+        if c.month == "all_months":
+            c.month_desc = 'all months'
+        else:
+            c.month_desc = ''.join([m[1] for m in c.months if m[0]==c.month])
+
+        if c.month == "all_months":
+            c.month = "All"
+        month = c.month
+
+        c.publisher_page_views = 0
+        q = model.Session.query(GA_Url).\
             filter(GA_Url.url=='/publisher/%s' % c.publisher_name)
         entry = q.filter(GA_Url.period_name==c.month).first()
         c.publisher_page_views = entry.pageviews if entry else 0
 
-        c.top_packages = self._get_packages(publisher=c.publisher, count=20, month=c.month)
+        c.top_packages = self._get_packages(publisher=c.publisher, count=100, month=c.month)
 
-        # Graph query
-        top_packages_all_time = self._get_packages(publisher=c.publisher, count=20, month='All')
-        top_package_names = [ x[0].name for x in top_packages_all_time ]
-        graph_query = model.Session.query(GA_Url,model.Package)\
-            .filter(model.Package.name==GA_Url.package_id)\
-            .filter(GA_Url.url.like('/dataset/%'))\
-            .filter(GA_Url.package_id.in_(top_package_names))
-        all_series = {}
-        for entry,package in graph_query:
-            if not package: continue
-            if entry.period_name=='All': continue
-            all_series[package.name] = all_series.get(package.name,{
-                'name':package.title,
-                'raw': {}
-                })
-            all_series[package.name]['raw'][entry.period_name] = int(entry.pageviews)
-        graph = [ all_series[series_name] for series_name in top_package_names ]
-        c.graph_data = json.dumps( _to_rickshaw(graph) )
+        chart_entries = map(convert_for_chart, c.top_packages)[:20]
+        setattr(c, 'dataset_chart', json.dumps(chart_entries))
 
-        return render('ga_report/publisher/read.html')
-
+        return render('ga_report/organization/dataset_month.html')
+	
 def _to_rickshaw(data, percentageMode=False):
     if data==[]:
         return data
@@ -471,7 +694,7 @@ def _to_rickshaw(data, percentageMode=False):
     return data
 
 
-def _get_top_publishers(limit=20):
+def _get_top_publishers(limit=50):
     '''
     Returns a list of the top 20 publishers by dataset visits.
     (The number to show can be varied with 'limit')
@@ -498,7 +721,7 @@ def _get_top_publishers(limit=20):
     return top_publishers
 
 
-def _get_top_publishers_graph(limit=20):
+def _get_top_publishers_graph(limit=50):
     '''
     Returns a list of the top 20 publishers by dataset visits.
     (The number to show can be varied with 'limit')

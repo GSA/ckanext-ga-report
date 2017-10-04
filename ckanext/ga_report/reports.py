@@ -5,9 +5,21 @@ from sqlalchemy import func
 
 from ckan import model
 from ckan.lib.helpers import OrderedDict
-from ckanext.dgu.lib.publisher import go_up_tree
+#from ckanext.dgu.lib.publisher import go_up_tree
 from ga_model import GA_Url  # , GA_Stat, GA_ReferralStat, GA_Publisher
 
+def go_up_tree(publisher):
+    '''Provided with a publisher object, it walks up the hierarchy and yields
+    each publisher, including the one you supply.
+
+    Essentially this is a slower version of Group.get_parent_group_hierarchy
+    because it returns Group objects, rather than dicts. And it includes the
+    publisher you supply.
+    '''
+    yield publisher
+    for parent in publisher.get_parent_groups(type='organization'):
+        for grandparent in go_up_tree(parent):
+            yield grandparent
 
 def publisher_report(metric):
     orgs = dict(model.Session.query(model.Group.name, model.Group)\

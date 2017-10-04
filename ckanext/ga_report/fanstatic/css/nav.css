@@ -1,0 +1,188 @@
+div.navbar {
+   margin-bottom: 0px;
+}
+
+div.navbar-inner {
+  padding: 0px 10px;
+}
+
+.navbar .nav {
+  margin: 0px !important;
+}
+
+div.tab {
+    overflow: hidden;
+    background-color: rgb(96, 158, 224);
+}
+
+/* Style the buttons inside the tab */
+div.tab button {
+    background-color: inherit;
+    float: left;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    padding: 14px 16px;
+    transition: 0.3s;
+}
+
+/* Change background color of buttons on hover */
+div.tab button:hover {
+    background-color: rgb(234, 157, 93);
+}
+
+/* Create an active/current tablink class */
+div.tab button.active {
+    background-color: rgb(234, 157, 93);
+}
+
+/* Style the tab content */
+.tabcontent {
+    display: none;
+    padding: 0px !important;
+    border-top: none;
+}
+
+.table-bordered {
+  width: 95%;
+  margin-left: 2.5%;
+  border: 1px solid rgb(218, 218, 218);
+  padding: 0px;
+  border-left: 0px !important;
+}
+
+.navbar-inner {
+  border-top: 0px;
+  border-right: 0px;
+}
+
+li a.selection {
+  color: black !important;
+  padding: 10px 12px !important;
+}
+
+.selection:hover {
+  color: #4679B2 !important;
+}
+
+.hero-unit {
+  border-radius: 0px;
+  margin-bottom: 0px;
+}
+
+.divider-vertical {
+  margin: 1px !important;
+}
+
+.download_button {
+  color: white !important;
+  display: inline-block;
+  float: right;
+  margin-right: 2%;
+}
+
+.download_div {
+  float: right;
+  display: inline-block;
+  width: 30%;
+}
+
+.breadcrumb_div {
+  display: inline-block;
+  width: 60%;
+}
+
+.breadcrumb_div li {
+  display: inline-block;
+}
+
+.module-content {
+  padding: 10px 0px !important;
+}
+
+.module-heading-first {
+  padding-top: .8em !important;
+  padding-bottom: .8em !important;
+  border-top: 0px;
+}
+
+ol.breadcrumb {
+  width: 100% !important;
+}
+
+section.module {
+  margin-top: 0px !important;
+}
+
+.hero-unit {
+  text-align: center;
+  padding: 40px 10px;
+}
+
+.ga-reports-heading {
+  display: inline-block;
+  margin-right: 5px;
+}
+
+.form-inline {
+  margin-top: 8px;
+}
+
+.info_table {
+  margin: 0px;
+  font-size: 11px;
+  width: 100% !important;
+  border-left: 0px !important;
+  border-right: 0px;
+  border-radius: 0px;
+}
+
+.info_table tr {
+  border-radius: 0px;
+}
+
+.tabcontent_info:hover {
+  background-color: #EEEEEE !important;
+}
+
+.info_table th, .info_table td {
+  padding: 4px 3px 3px 4px !important;
+  border-left: 0px;
+  border-radius: 0px !important;
+}
+
+.nav-dropdown-menu {
+ left: 0px !important;
+}
+
+.nav-dropdown-menu li a{
+  padding-right: 5px;
+  padding-left: 5px;
+  text-align: center;
+}
+
+.tabcontent_info {
+  cursor: pointer;
+}
+
+@media only screen and (max-width: 570px) {
+
+  .download_div {
+    width: 90%;
+    float: left;
+  }
+
+  .breadcrumb_div {
+    width: 80%;
+  }
+
+  .download_button {
+    margin-top: 3%;
+    float: left;
+  }
+  
+  .breadcrumb_div li a{
+    font-size: 18px !important;
+  }
+
+}

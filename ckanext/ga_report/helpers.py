@@ -96,7 +96,7 @@ def most_popular_datasets(publisher, count=20, preview_image=None):
         'preview_image': preview_image
     }
 
-    return base.render_snippet('ga_report/publisher/popular.html', **ctx)
+    return base.render_snippet('ga_report/organization/popular.html', **ctx)
 
 def _datasets_for_publisher(publisher, count):
     datasets = {}

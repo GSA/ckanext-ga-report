@@ -1,0 +1,486 @@
+{% import "/ga_report/ga_util_jinja.html" as m with context %}
+
+    <div class="enclosing_body col-sm-10">
+      <div class="tabcontent" id="total_traffic">
+        <div class="col-sm-12 top_row hero-unit">
+          <h1 class="site_title">Site Usage Statistics</h1>
+          <p>This page displays site usage statistics for data.gov and catalog.data.gov</p>
+        </div>
+        <form class="form-inline" action="{{h.url_for(controller='ckanext.ga_report.controller:GaReport',action='index')}}" method="get">
+          <h4 class="ga-reports-heading">Show stats table for:</h4>
+          {{m.month_selector(c.month, c.months, c.day)}}
+        </form>
+        <table class="ga-reports-table table table-condensed table-bordered table-striped">
+          <tr>
+            <th>Name</th>
+            <th class="td-numeric">Value</th>
+          </tr>
+          {% for name, value in c.global_totals %}
+          {% set value = value|float %}
+          <tr>
+            <td>{{name}}</td>
+	    {% if name=="Average time on site" or name == "Average time on a page" %}
+            <td>{{"{:,.2f}".format(value)}} (s)</td>
+	    {% elif name=="New users percentage" or name=="Percent with search" or name=="Bounce rate" %}
+            <td>{{"{:,.0f}".format(value|round(2, 'floor'))}}%</td>
+	    {% else %}
+            <td>{{"{:,.0f}".format(value|round(2, 'floor'))}}</td>
+            {% endif %}
+          </tr>
+          {% endfor %}
+        </table>
+      </div>
+      <div class="tabcontent" id="page_views">
+        <form class="form-inline" action="{{h.url_for(controller='ckanext.ga_report.controller:GaReport',action='index')}}" method="get">
+          <h4 class="ga-reports-heading">Show stats table for:</h4>
+          {{m.month_selector(c.month, c.months, c.day)}}
+        </form>
+        <div class="charts" id="chart1"></div>
+        <script>
+        $(function() {
+          barChart({{c.page_views_chart|safe}},'Most Popular Pages','views',"#chart1",true)
+        });
+        $( window ).resize(function() {
+          document.getElementById("chart1").innerHTML = "";
+          barChart({{c.page_views_chart|safe}},'Most Popular Pages','views',"#chart1",true)
+        });
+        </script>
+        <br>
+        <table class="col-sm-12 ga-reports-table table table-condensed table-bordered table-striped">
+          <tr>
+            <th>Page</th>
+            <th class="td-numeric">Views</th>
+          </tr>
+          {% for page, views in c.page_views %}
+          <tr>
+            <td><a href="https://{{page}}" target="_blank">{{page}}</a></td>
+            <td class="td-numeric">{{"{:,.0f}".format(views)}}</td>
+          </tr>
+          {% endfor %}
+        </table>
+      </div>
+      <div class="tabcontent" id="page_avgTime">
+        <form class="form-inline" action="{{h.url_for(controller='ckanext.ga_report.controller:GaReport',action='index')}}" method="get">
+          <h4 class="ga-reports-heading">Show stats table for:</h4>
+          {{m.month_selector(c.month, c.months, c.day)}}
+        </form>
+        <div class="charts" id="chart2"></div>
+        <script>
+        $(function() {
+          barChart({{c.page_avgTime_chart|safe}},'Average Time on Page','seconds',"#chart2",true)
+        });
+        $( window ).resize(function() {
+          document.getElementById("chart2").innerHTML = "";
+          barChart({{c.page_avgTime_chart|safe}},'Average Time on Page','seconds',"#chart2",true);
+        });
+        </script>
+        <table class="ga-reports-table table table-condensed table-bordered table-striped">
+          <tr>
+            <th>Page</th>
+            <th class="td-numeric">Time (seconds)</th>
+          </tr>
+          {% for page, avgTime in c.page_avgTime %}
+          <tr>
+            <td><a href="https://{{page}}" target="_blank">{{page}}</a></td>
+            <td class="td-numeric">{{avgTime|round|int}}</td>
+          </tr>
+          {% endfor %}
+        </table>
+      </div>
+      <div class="tabcontent" id="landing_page">
+        <form class="form-inline" action="{{h.url_for(controller='ckanext.ga_report.controller:GaReport',action='index')}}" method="get">
+          <h4 class="ga-reports-heading">Show stats table for:</h4>
+          {{m.month_selector(c.month, c.months, c.day)}}
+        </form>
+        <div class="charts" id="chart3"></div>
+        <script>
+        $(function() {
+          barChart({{c.landing_page_chart|safe}},'Landing Pages','entrances',"#chart3",true);
+        });
+        $( window ).resize(function() {
+          document.getElementById("chart3").innerHTML = "";
+          barChart({{c.landing_page_chart|safe}},'Landing Pages','entrances',"#chart3",true);
+        });
+        </script>
+        <table class="ga-reports-table table table-condensed table-bordered table-striped">
+          <tr>
+            <th>Landing Page</th>
+            <th class="td-numeric">Entrances</th>
+          </tr>
+          {% for page, entrances in c.landing_page %}
+          <tr>
+            <td><a href="https://{{page}}" target="_blank">{{page}}</a></td>
+            <td class="td-numeric">{{"{:,.0f}".format(entrances)}}</td>
+          </tr>
+          {% endfor %}
+        </table>
+      </div>
+      <div class="tabcontent" id="second_page">
+        <form class="form-inline" action="{{h.url_for(controller='ckanext.ga_report.controller:GaReport',action='index')}}" method="get">
+          <h4 class="ga-reports-heading">Show stats table for:</h4>
+          {{m.month_selector(c.month, c.months, c.day)}}
+        </form>
+        <div class="charts" id="chart4"></div>
+        <script>
+        $(function() {
+          barChart({{c.second_page_chart|safe}},'Page Path Level 1','entrances',"#chart4",true);
+        });
+        $( window ).resize(function() {
+          document.getElementById("chart4").innerHTML = "";
+          barChart({{c.second_page_chart|safe}},'Page Path Level 1','entrances',"#chart4",true);
+        });
+        </script>
+        <table class="ga-reports-table table table-condensed table-bordered table-striped">
+          <tr>
+            <th>Page</th>
+            <th class="td-numeric">Views</th>
+          </tr>
+          {% for page, views in c.second_page %}
+          <tr>
+            <td><a href="https://{{page}}" target="_blank">{{page}}</a></td>
+            <td class="td-numeric">{{"{:,.0f}".format(views)}}</td>
+          </tr>
+          {% endfor %}
+        </table>
+      </div>
+      <div class="tabcontent" id="third_page">
+        <form class="form-inline" action="{{h.url_for(controller='ckanext.ga_report.controller:GaReport',action='index')}}" method="get">
+          <h4 class="ga-reports-heading">Show stats table for:</h4>
+          {{m.month_selector(c.month, c.months, c.day)}}
+        </form>
+        <div class="charts" id="chart5"></div>
+        <script>
+        $(function() {
+          barChart({{c.third_page_chart|safe}},'Page Path Level 2','entrances',"#chart5",true)
+        });
+        $( window ).resize(function() {
+          document.getElementById("chart5").innerHTML = "";
+          barChart({{c.third_page_chart|safe}},'Page Path Level 2','entrances',"#chart5",true);
+        });
+        </script>
+        <table class="ga-reports-table table table-condensed table-bordered table-striped">
+          <tr>
+            <th>Page</th>
+            <th class="td-numeric">Views</th>
+          </tr>
+          {% for page, views in c.third_page %}
+          <tr>
+            <td><a href="https://{{page}}" target="_blank">{{page}}</a></td>
+            <td class="td-numeric">{{"{:,.0f}".format(views)}}</td>
+          </tr>
+          {% endfor %}
+        </table>
+      </div>
+      <div class="tabcontent" id="exit_page">
+        <form class="form-inline" action="{{h.url_for(controller='ckanext.ga_report.controller:GaReport',action='index')}}" method="get">
+          <h4 class="ga-reports-heading">Show stats table for:</h4>
+          {{m.month_selector(c.month, c.months, c.day)}}
+        </form>
+        <div class="charts" id="chart7"></div>
+        <script>
+        $(function() {
+          barChart({{c.exit_page_chart|safe}},'Exit Pages','exits',"#chart7",true)
+        });
+        $( window ).resize(function() {
+          document.getElementById("chart7").innerHTML = "";
+          barChart({{c.exit_page_chart|safe}},'Exit Pages','exits',"#chart7",true);
+        });
+        </script>
+        <table class="ga-reports-table table table-condensed table-bordered table-striped">
+          <tr>
+            <th>Exit Page</th>
+            <th class="td-numeric">Exits</th>
+          </tr>
+          {% for page, exits in c.exit_page %}
+          <tr>
+            <td><a href="https://{{page}}" target="_blank">{{page}}</a></td>
+            <td class="td-numeric">{{"{:,.0f}".format(exits)}}</td>
+          </tr>
+          {% endfor %}
+        </table>
+      </div>
+      <div class="tabcontent" id="time_on_page">
+        <form class="form-inline" action="{{h.url_for(controller='ckanext.ga_report.controller:GaReport',action='index')}}" method="get">
+          <h4 class="ga-reports-heading">Show stats table for:</h4>
+          {{m.month_selector(c.month, c.months, c.day)}}
+        </form>
+        <div class="charts" id="chart6"></div>
+        <script>
+        $(function() {
+          barChart({{c.time_on_page_chart|safe}},'Total Time on Page','seconds',"#chart6",true)
+        });
+        $( window ).resize(function() {
+          document.getElementById("chart6").innerHTML = "";
+          barChart({{c.time_on_page_chart|safe}},'Total Time on Page','seconds',"#chart6",true)
+        });
+        </script>
+        <table class="ga-reports-table table table-condensed table-bordered table-striped">
+          <tr>
+            <th>Page</th>
+            <th class="td-numeric">Time(s)</th>
+          </tr>
+          {% for page, timeOn in c.time_on_page %}
+          <tr>
+            <td><a href="https://{{page}}" target="_blank">{{page}}</a></td>
+            <td class="td-numeric">{{"{:,.0f}".format(timeOn)}}</td>
+          </tr>
+          {% endfor %}
+        </table>
+      </div>
+      <div class="tabcontent" id="browsers_names">
+        <form class="form-inline" action="{{h.url_for(controller='ckanext.ga_report.controller:GaReport',action='index')}}" method="get">
+          <h4 class="ga-reports-heading">Show stats table for:</h4>
+          {{m.month_selector(c.month, c.months, c.day)}}
+        </form>
+        <br>
+        <div class="charts" id="chart9"></div>
+        <script>
+        $(function() {
+          pieChart({{c.browsers_chart|safe}},"#chart9", "User Browsers")
+        });
+        $( window ).resize(function() {
+          document.getElementById("chart9").innerHTML = "";
+          pieChart({{c.browsers_chart|safe}},"#chart9", "User Browsers")
+        });
+        </script>
+        {{m.stat_table(c.browsers)}}
+      </div>
+      <div class="tabcontent" id="browser_sizes">
+        <form class="form-inline" action="{{h.url_for(controller='ckanext.ga_report.controller:GaReport',action='index')}}" method="get">
+          <h4 class="ga-reports-heading">Show stats table for:</h4>
+          {{m.month_selector(c.month, c.months, c.day)}}
+        </form>
+        <br>
+        <div class="charts" id="chart10"></div>
+        <script>
+        $(function() {
+          pieChart({{c.browser_sizes_chart|safe}},"#chart10", "User Screen Sizes")
+        });
+        $( window ).resize(function() {
+          document.getElementById("chart10").innerHTML = "";
+          pieChart({{c.browser_sizes_chart|safe}},"#chart10", "User Screen Sizes")
+        });
+        </script>
+        {{m.stat_table(c.browser_sizes)}}
+      </div>
+      <div class="tabcontent" id="device_category">
+        <form class="form-inline" action="{{h.url_for(controller='ckanext.ga_report.controller:GaReport',action='index')}}" method="get">
+          <h4 class="ga-reports-heading">Show stats table for:</h4>
+          {{m.month_selector(c.month, c.months, c.day)}}
+        </form>
+        <br>
+        <div class="charts" id="chart18"></div>
+        <script>
+        $(function() {
+          pieChart({{c.device_category_chart|safe}},"#chart18", "User Devices")
+        });
+        $( window ).resize(function() {
+          document.getElementById("chart18").innerHTML = "";
+          pieChart({{c.device_category_chart|safe}},"#chart18", "User Devices")
+        });
+        </script>
+        {{m.stat_table(c.device_category)}}
+      </div>
+      <div class="tabcontent" id="os">
+        <form class="form-inline" action="{{h.url_for(controller='ckanext.ga_report.controller:GaReport',action='index')}}" method="get">
+          <h4 class="ga-reports-heading">Show stats table for:</h4>
+          {{m.month_selector(c.month, c.months, c.day)}}
+        </form>
+        <br>
+        <div class="charts" id="chart11"></div>
+        <script>
+        $(function() {
+          pieChart({{c.os_chart|safe}},"#chart11", "User Operating Systems")
+        });
+        $( window ).resize(function() {
+          document.getElementById("chart11").innerHTML = "";
+          pieChart({{c.os_chart|safe}},"#chart11", "User Operating Systems")
+        });
+        </script>
+        {{m.stat_table(c.os)}}
+      </div>
+      <div class="tabcontent" id="mobile_brands">
+        <form class="form-inline" action="{{h.url_for(controller='ckanext.ga_report.controller:GaReport',action='index')}}" method="get">
+          <h4 class="ga-reports-heading">Show stats table for:</h4>
+          {{m.month_selector(c.month, c.months, c.day)}}
+        </form>
+        <br>
+        <div class="charts" id="chart12"></div>
+        <script>
+        $(function() {
+          pieChart({{c.mobile_brands_chart|safe}},"#chart12", "User Mobile Brands")
+        });
+        $( window ).resize(function() {
+          document.getElementById("chart12").innerHTML = "";
+          pieChart({{c.mobile_brands_chart|safe}},"#chart12", "User Mobile Brands")
+        });
+        </script>
+        {{m.stat_table(c.mobile_brands)}}
+      </div>
+      <div class="tabcontent" id="mobile_devices">
+        <form class="form-inline" action="{{h.url_for(controller='ckanext.ga_report.controller:GaReport',action='index')}}" method="get">
+          <h4 class="ga-reports-heading">Show stats table for:</h4>
+          {{m.month_selector(c.month, c.months, c.day)}}
+        </form>
+        <br>
+        <div class="charts" id="chart13"></div>
+        <script>
+        $(function() {
+          pieChart({{c.mobile_devices_chart|safe}},"#chart13", "User Mobile Devices")
+        });
+        $( window ).resize(function() {
+          document.getElementById("chart13").innerHTML = "";
+          pieChart({{c.mobile_devices_chart|safe}},"#chart13", "User Mobile Devices")
+        });
+        </script>
+        {{m.stat_table(c.mobile_devices)}}
+      </div>
+      <div class="tabcontent" id="languages">
+        <form class="form-inline" action="{{h.url_for(controller='ckanext.ga_report.controller:GaReport',action='index')}}" method="get">
+          <h4 class="ga-reports-heading">Show stats table for:</h4>
+          {{m.month_selector(c.month, c.months, c.day)}}
+        </form>
+        <br>
+        <div class="charts" id="chart14"></div>
+        <script>
+        $(function() {
+          pieChart({{c.languages_chart|safe}},"#chart14", "Languages")
+        });
+        $( window ).resize(function() {
+          document.getElementById("chart14").innerHTML = "";
+          pieChart({{c.languages_chart|safe}},"#chart14", "Languages")
+        });
+        </script>
+        {{m.stat_table(c.languages)}}
+      </div>
+      <div class="tabcontent" id="country">
+        <form class="form-inline" action="{{h.url_for(controller='ckanext.ga_report.controller:GaReport',action='index')}}" method="get">
+          <h4 class="ga-reports-heading">Show stats table for:</h4>
+          {{m.month_selector(c.month, c.months, c.day)}}
+        </form>
+        <br>
+        <div class="charts" id="chart15"></div>
+        <script>
+        $(function() {
+          pieChart({{c.country_chart|safe}},"#chart15", "Country")
+        });
+        $( window ).resize(function() {
+          document.getElementById("chart15").innerHTML = "";
+          pieChart({{c.country_chart|safe}},"#chart15", "Country")
+        });
+        </script>
+        {{m.stat_table(c.country)}}
+     </div>
+      <div class="tabcontent" id="region">
+        <form class="form-inline" action="{{h.url_for(controller='ckanext.ga_report.controller:GaReport',action='index')}}" method="get">
+          <h4 class="ga-reports-heading">Show stats table for:</h4>
+          {{m.month_selector(c.month, c.months, c.day)}}
+        </form>
+        <br>
+        <div class="charts" id="chart16"></div>
+        <script>
+        $(function() {
+          pieChart({{c.region_chart|safe}},"#chart16", "Region")
+        });
+        $( window ).resize(function() {
+          document.getElementById("chart16").innerHTML = "";
+          pieChart({{c.region_chart|safe}},"#chart16", "Region")
+        });
+        </script>
+        {{m.stat_table(c.region)}}
+      </div>
+      <div class="tabcontent" id="metro">
+        <form class="form-inline" action="{{h.url_for(controller='ckanext.ga_report.controller:GaReport',action='index')}}" method="get">
+          <h4 class="ga-reports-heading">Show stats table for:</h4>
+          {{m.month_selector(c.month, c.months, c.day)}}
+        </form>
+        <br>
+        <div class="charts" id="chart17"></div>
+        <script>
+        $(function() {
+          pieChart({{c.metro_chart|safe}},"#chart17", "Metro")
+        });
+        $( window ).resize(function() {
+          document.getElementById("chart17").innerHTML = "";
+          pieChart({{c.metro_chart|safe}},"#chart17", "Metro")
+        });
+        </script>
+        {{m.stat_table(c.metro)}}
+      </div>
+      <div class="tabcontent" id="search_keywords">
+        <form class="form-inline" action="{{h.url_for(controller='ckanext.ga_report.controller:GaReport',action='index')}}" method="get">
+          <h4 class="ga-reports-heading">Show stats table for:</h4>
+          {{m.month_selector(c.month, c.months, c.day)}}
+        </form>
+        <br>
+        <div class="charts" id="chart19"></div>
+        <script>
+        $(function() {
+          barChart({{c.search_keywords_chart|safe}},"Search Keywords", 'search views', "#chart19", true)
+        });
+        $( window ).resize(function() {
+          document.getElementById("chart19").innerHTML = "";
+          barChart({{c.search_keywords_chart|safe}},"Search Keywords", 'search views', "#chart19", true)
+        });
+        </script>
+        <table class="ga-reports-table table table-condensed table-bordered table-striped">
+          <tr>
+            <th>Page</th>
+            <th class="td-numeric">Search Views</th>
+          </tr>
+          {% for page, searchViews in c.search_keywords %}
+          <tr>
+	    <td><a href="https://catalog.data.gov/dataset?q={{page}}" target="_blank">{{page}}</a></td>
+            <td class="td-numeric">{{"{:,.0f}".format(searchViews)}}</td>
+          </tr>
+          {% endfor %}
+        </table>
+      </div>
+      <div class="tabcontent" id="search_destination_page">
+        <form class="form-inline" action="{{h.url_for(controller='ckanext.ga_report.controller:GaReport',action='index')}}" method="get">
+          <h4 class="ga-reports-heading">Show stats table for:</h4>
+          {{m.month_selector(c.month, c.months, c.day)}}
+        </form>
+        <br>
+        <div class="charts" id="chart20"></div>
+        <script>
+        $(function() {
+          barChart({{c.search_destination_page_chart|safe}},"Destination Page After Searches", 'search views', "#chart20", true)
+        });
+        $( window ).resize(function() {
+          document.getElementById("chart20").innerHTML = "";
+          barChart({{c.search_destination_page_chart|safe}},"Destination Page After Searches", 'search views', "#chart20", true)
+        });
+        </script>
+        <table class="ga-reports-table table table-condensed table-bordered table-striped">
+          <tr>
+            <th>Page</th>
+            <th class="td-numeric">Search Views</th>
+          </tr>
+          {% for page, searchViews in c.search_destination_page %}
+          <tr>
+            <td><a href="https://{{page}}" target="_blank">{{page}}</a></td>
+            <td class="td-numeric">{{"{:,.0f}".format(searchViews)}}</td>
+          </tr>
+          {% endfor %}
+        </table>
+      </div>
+    </div>
+<script>
+$('select[name="month"]').on('change', function(e) {
+    var target = $(e.delegateTarget);
+    var form = target.closest('form');
+    var url = form.attr('action')+'_'+target.val();
+    if(target.val() == "") {
+        url = form.attr('action') + '_all_months';
+    }
+    $.ajax({
+      url: url,
+      type: "GET",
+      success: function(data){
+         $(".ajax_container").html(data);
+	 document.getElementById(last_div + "_click").click();
+      }
+   });
+});
+</script>

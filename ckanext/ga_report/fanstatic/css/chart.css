@@ -1,0 +1,86 @@
+.bar {
+  stroke: black;
+  stroke-width: .2;
+}
+
+.bar:hover {
+  fill: rgb(255, 236, 96);
+  box-shadow: 2px 2px grey;
+}
+
+.y-axis {
+  position: relative;
+  left: 5px;
+  margin-left: 10px;
+}
+
+.barchart-tooltip {
+  position: absolute;
+  text-align: left;
+  padding: 10px 15px;
+  font-size: 16px;
+  background: rgb(255, 236, 96);
+  color: black;
+  border-radius: 4px;
+  pointer-events: none;
+  z-index: 99;
+}
+
+.ga-reports-table {
+  margin-top: 2%;
+}
+
+.enclosing_body {
+  padding: 0px !important;
+  border-left: .5px solid rgb(218, 218, 218);
+}
+
+.titles {
+  margin-left: 30%;
+  margin-bottom: 0px !important;
+  text-decoration: underline;
+}
+
+table {
+  background: white;
+}
+
+.form-inline {
+  margin-left: 2.5%;
+}
+
+.legend {
+  font-size: 12px;
+}
+.pie-chart-tooltip {
+  background: rgb(255, 236, 96);
+  box-shadow: 0 0 5px #999999;
+  color: black;
+  display: none;
+  font-size: 15px;
+  left: 130px;
+  padding: 10px;
+  position: absolute;
+  text-align: center;
+  top: 95px;
+  width: 100px;
+  z-index: 10;
+}
+
+rect.disabled {                              
+  fill: transparent !important;              
+} 
+                                           
+rect {
+  cursor:pointer;
+  stroke-width: 2;
+}
+
+.x-axis-label {
+  cursor: pointer;
+  fill: rgb(41, 69, 99);
+}
+
+.x-axis-label:hover {
+  text-decoration: underline;
+}

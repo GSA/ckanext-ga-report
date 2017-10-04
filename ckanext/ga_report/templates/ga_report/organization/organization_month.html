@@ -1,0 +1,48 @@
+{% import "/ga_report/ga_util_jinja.html" as m with context %}
+
+      <form class="form-inline" action="{{h.url_for(controller='ckanext.ga_report.controller:GaDatasetReport',action='organizations')}}" method="get">
+          <div class="controls">
+            <h4 class="ga-reports-heading" style="display:inline-block;margin-right: 5px;">Show statistics for: </h4>
+              {{m.month_selector(c.month, c.months, c.day)}}
+          </div>
+       </form>
+
+     <div class="charts" id="chart1"></div>
+     <script>
+        $(function() {
+          barChart({{c.publisher_chart|safe}},'Top Organizations','views',"#chart1",true, 20)
+        });
+     </script>
+
+     <table class="ga-reports-table table table-condensed table-bordered table-striped">
+       <tr>
+         <th>Organization</th>
+         <th class="td-numeric">Dataset Views</th>
+       </tr>
+       {% for publisher, views, visits in c.top_publishers %}
+        <tr>
+          <td>
+              {{h.link_to(publisher.title, h.url_for(controller='ckanext.ga_report.controller:GaDatasetReport', action='read_organization', id=publisher.name) + (("?month=" + c.month) if c.month else ''))}}
+          </td>
+          <td class="td-numeric">{{"{:,.0f}".format(views)}}</td>
+        </tr>
+        {% endfor %}
+     </table>
+
+<script>
+$('select[name="month"]').on('change', function(e) {
+    var target = $(e.delegateTarget);
+    var form = target.closest('form');
+    var url = form.attr('action')+'_'+target.val();
+    if(target.val() == "") {
+        url = form.attr('action') + '_all_months';
+    }
+    $.ajax({
+      url: url,
+      type: "GET",
+      success: function(data){
+         $(".ajax_container").html(data);
+      }
+   });
+});
+</script>

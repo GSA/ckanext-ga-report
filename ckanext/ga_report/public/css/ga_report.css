@@ -69,3 +69,18 @@
 .tab-content {
   padding-top: 12px;
 }
+.download_button {
+  margin: 20px 20px 10px 20px;
+}
+.site_title {
+  font-size: 25px;
+}
+.enclosing_body {
+  padding: 5%;
+}
+.top_row {
+  padding: 2% 5%;;
+}
+form {
+  padding-top: 3%;
+}
