@@ -114,4 +114,5 @@ class GAReportPlugin(p.SingletonPlugin):
     def register_reports(self):
         """Register details of an extension's reports"""
         from ckanext.ga_report import reports
-        return [reports.publisher_report_info]
+        #return [reports.publisher_report_info]
+        return []
