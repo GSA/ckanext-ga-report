@@ -157,7 +157,7 @@ class DownloadAnalytics(object):
                          period_name)
                 ga_model.delete(period_name, only)
 
-            if self.stat in (None, 'url')  and (only == 'all' or only == 'datasets' or only == 'publishers'):
+            if self.stat in (None, 'url') and (only == 'all' or only == 'datasets' or only == 'publishers'):
                 # Clean out old url data before storing the new
                 ga_model.pre_update_url_stats(period_name)
 
@@ -173,7 +173,7 @@ class DownloadAnalytics(object):
                 #   '/data/search'
                 path_prefix += '(/%s)?' % accountName
 
-                if only == 'datasets':
+                if only == 'datasets' or only == 'all':
                     log.info('Downloading analytics for dataset views')
                     data = self.download(start_date, end_date,
                                      path_prefix + '/dataset/[a-z0-9-_]+')
@@ -181,7 +181,7 @@ class DownloadAnalytics(object):
                     log.info('Storing dataset views (%i rows)', len(data.get('url')))
                     self.store(period_name, period_complete_day, data, )
 
-                if only == 'publishers':
+                if only == 'publishers' or only == 'all':
                     log.info('Downloading analytics for publisher views')
                     data = self.download(start_date, end_date,
                                      path_prefix + '/publisher/[a-z0-9-_]+')

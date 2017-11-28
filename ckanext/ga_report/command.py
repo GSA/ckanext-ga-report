@@ -160,9 +160,9 @@ class LoadAnalytics(CkanCommand):
         elif time_period == 'year-step':
             year_date = self.args[1]
             downloader.specific_year_step(year_date)
-        elif time_period = 'only':
-            only_data = args[1]
-            selected_date = arg[2]
+        elif time_period == 'only':
+            only_data = str(self.args[1])
+            selected_date = self.args[2]
             for_date = datetime.datetime.strptime(selected_date, '%Y-%m')
             downloader.specific_month_only(for_date, only_data)
         else:
