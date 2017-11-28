@@ -188,12 +188,12 @@ class DownloadAnalytics(object):
                 log.info('Downloading and storing analytics for site-wide stats')
                 self.sitewide_stats(period_name, period_complete_day)
 
-            if self.stat in (None, 'social'):
-                # Clean out old ga_stats data before storing the new
-                ga_model.pre_update_social_stats(period_name)
+            # if self.stat in (None, 'social'):
+            #     # Clean out old ga_stats data before storing the new
+            #     ga_model.pre_update_social_stats(period_name)
 
-                log.info('Downloading and storing analytics for social networks')
-                self.update_social_info(period_name, start_date, end_date)
+            #     log.info('Downloading and storing analytics for social networks')
+            #     self.update_social_info(period_name, start_date, end_date)
 
     def update_social_info(self, period_name, start_date, end_date):
         start_date = start_date.strftime('%Y-%m-%d')
@@ -284,9 +284,8 @@ class DownloadAnalytics(object):
 
         start_date = '%s-01' % period_name
         end_date = '%s-%s' % (period_name, last_day_of_month)
-        funcs = ['_page_stats','_totals_stats', '_referral_stats', '_os_stats',
-                 '_locale_stats', '_browser_stats', '_mobile_stats',
-                 '_download_stats', '_search_stats'
+        funcs = ['_page_stats','_totals_stats', '_os_stats',
+                 '_locale_stats', '_browser_stats', '_search_stats'
                  ]
         for f in funcs:
             log.info('Downloading analytics for %s' % f.split('_')[1])
