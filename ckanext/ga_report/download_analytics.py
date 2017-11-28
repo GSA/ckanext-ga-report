@@ -159,7 +159,8 @@ class DownloadAnalytics(object):
 
             if self.stat in (None, 'url') and (only == 'all' or only == 'datasets' or only == 'publishers'):
                 # Clean out old url data before storing the new
-                ga_model.pre_update_url_stats(period_name)
+                if only == 'datasets':
+                    ga_model.pre_update_url_stats(period_name)
 
                 accountName = config.get('googleanalytics.account')
 
@@ -190,10 +191,12 @@ class DownloadAnalytics(object):
                     self.store(period_name, period_complete_day, data,)
 
                 # Create the All records
-                ga_model.post_update_url_stats()
+                if only == 'publishers':
+                    ga_model.post_update_url_stats()
 
-                log.info('Associating datasets with their publisher')
-                ga_model.update_publisher_stats(period_name) # about 30 seconds.
+                if only == 'publishers':
+                    log.info('Associating datasets with their publisher')
+                    ga_model.update_publisher_stats(period_name) # about 30 seconds.
 
             if self.stat == 'url-all':
                 # This stat is split off just for test purposes
