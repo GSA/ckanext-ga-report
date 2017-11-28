@@ -456,12 +456,20 @@ def go_down_tree(publisher):
         for grandchild in go_down_tree(child):
             yield grandchild
 
-def delete(period_name):
+def delete(period_name, only):
     '''
     Deletes table data for the specified period, or specify 'all'
     for all periods.
     '''
-    for object_type in (GA_Url, GA_Stat, GA_Publisher, GA_ReferralStat):
+    if only == 'all':
+        delete_tuple = (GA_Url, GA_Stat, GA_Publisher, GA_ReferralStat)
+    elif only == 'datasets':
+        delete_tuple = (GA_Url,)
+    elif only == 'publishers':
+        delete_tuple = (GA_Publisher,)
+    elif only == 'sitewide':
+        delete_tuple = (GA_Stat,)
+    for object_type in delete_tuple:
         q = model.Session.query(object_type)
         if period_name != 'All':
             q = q.filter_by(period_name=period_name)
