@@ -76,6 +76,22 @@ class DownloadAnalytics(object):
                     first_of_this_month, last_of_this_month),)
         self.download_and_store(periods)
 
+    def specific_month_only(self, date, only):
+        import calendar
+
+        first_of_this_month = datetime.datetime(date.year, date.month, 1)
+        _, last_day_of_month = calendar.monthrange(int(date.year), int(date.month))
+        last_of_this_month = datetime.datetime(date.year, date.month, last_day_of_month)
+        # if this is the latest month, note that it is only up until today
+        now = datetime.datetime.now()
+        if now.year == date.year and now.month == date.month:
+            last_day_of_month = now.day
+            last_of_this_month = now
+        periods = ((date.strftime(FORMAT_MONTH),
+                    last_day_of_month,
+                    first_of_this_month, last_of_this_month),)
+        self.download_and_store(periods, only)
+
     def latest(self):
         if self.period == 'monthly':
             # from first of this month to today
@@ -129,7 +145,7 @@ class DownloadAnalytics(object):
         else:
             return period_name
 
-    def download_and_store(self, periods):
+    def download_and_store(self, periods, only='all'):
         for period_name, period_complete_day, start_date, end_date in periods:
             log.info('Period "%s" (%s - %s)',
                      self.get_full_period_name(period_name, period_complete_day),
@@ -139,11 +155,12 @@ class DownloadAnalytics(object):
             if self.delete_first:
                 log.info('Deleting existing Analytics for this period "%s"',
                          period_name)
-                ga_model.delete(period_name)
+                ga_model.delete(period_name, only)
 
-            if self.stat in (None, 'url'):
+            if self.stat in (None, 'url') and (only == 'all' or only == 'datasets' or only == 'publishers'):
                 # Clean out old url data before storing the new
-                ga_model.pre_update_url_stats(period_name)
+                if only == 'datasets':
+                    ga_model.pre_update_url_stats(period_name)
 
                 accountName = config.get('googleanalytics.account')
 
@@ -157,31 +174,35 @@ class DownloadAnalytics(object):
                 #   '/data/search'
                 path_prefix += '(/%s)?' % accountName
 
-                log.info('Downloading analytics for dataset views')
-                data = self.download(start_date, end_date,
+                if only == 'datasets' or only == 'all':
+                    log.info('Downloading analytics for dataset views')
+                    data = self.download(start_date, end_date,
                                      path_prefix + '/dataset/[a-z0-9-_]+')
 
-                log.info('Storing dataset views (%i rows)', len(data.get('url')))
-                self.store(period_name, period_complete_day, data, )
+                    log.info('Storing dataset views (%i rows)', len(data.get('url')))
+                    self.store(period_name, period_complete_day, data, )
 
-                log.info('Downloading analytics for publisher views')
-                data = self.download(start_date, end_date,
+                if only == 'publishers' or only == 'all':
+                    log.info('Downloading analytics for publisher views')
+                    data = self.download(start_date, end_date,
                                      path_prefix + '/publisher/[a-z0-9-_]+')
 
-                log.info('Storing publisher views (%i rows)', len(data.get('url')))
-                self.store(period_name, period_complete_day, data,)
+                    log.info('Storing publisher views (%i rows)', len(data.get('url')))
+                    self.store(period_name, period_complete_day, data,)
 
                 # Create the All records
-                ga_model.post_update_url_stats()
+                if only == 'publishers' or only == 'all':
+                    ga_model.post_update_url_stats()
 
-                log.info('Associating datasets with their publisher')
-                ga_model.update_publisher_stats(period_name) # about 30 seconds.
+                if only == 'publishers' or only == 'all':
+                    log.info('Associating datasets with their publisher')
+                    ga_model.update_publisher_stats(period_name) # about 30 seconds.
 
             if self.stat == 'url-all':
                 # This stat is split off just for test purposes
                 ga_model.post_update_url_stats()
 
-            if self.stat in (None, 'sitewide'):
+            if self.stat in (None, 'sitewide') and (only == 'all' or only == 'sitewide'):
                 # Clean out old ga_stats data before storing the new
                 ga_model.pre_update_sitewide_stats(period_name)
 
